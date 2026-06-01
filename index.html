@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>识字小达人 - 认字测评</title>
+<style>
+  :root {
+    --bg: #FFF9F0;
+    --card: #FFFFFF;
+    --primary: #FF6B6B;
+    --success: #51CF66;
+    --warning: #FFD43B;
+    --text: #2D3436;
+    --sub: #868E96;
+    --border: #F1F3F5;
+    --shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    padding: 32px 28px;
+    position: relative;
+    min-height: 640px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #FF6B6B, #FF922B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { background: #FFF5F5; border-color: #FFC9C9; }
+
+  /* ---- Profile badge in header ---- */
+  .profile-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 24px;
+    background: #F8F9FA;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .profile-badge:hover { background: #FFF0E6; }
+  .profile-avatar-sm {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #FFE8CC;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .profile-name-sm { font-size: 13px; font-weight: 600; }
+
+  /* ---- Progress bar ---- */
+  .progress-wrap { margin-bottom: 28px; }
+  .progress-info {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--sub); margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 8px; background: #F1F3F5; border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, #FFD43B, #FF922B);
+    border-radius: 4px; transition: width 0.4s ease;
+  }
+
+  /* ---- Character card ---- */
+  .char-stage {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px;
+  }
+  .char-card {
+    width: 180px; height: 180px;
+    background: #FFFEF9;
+    border: 3px dashed #FFE8CC;
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 88px; font-weight: 700;
+    color: #2D3436;
+    transition: transform 0.3s, box-shadow 0.3s;
+    user-select: none;
+  }
+  .char-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(255,107,107,0.12);
+  }
+  .char-card.pulse {
+    animation: pulseIn 0.6s ease;
+  }
+  @keyframes pulseIn {
+    0% { transform: scale(0.85); opacity: 0.4; }
+    60% { transform: scale(1.08); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .speak-btn {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid #FFD43B;
+    background: #FFF9DB;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    margin-top: -8px;
+  }
+  .speak-btn:hover { background: #FFF3BF; transform: scale(1.1); }
+  .speak-btn:active { transform: scale(0.95); background: #FFE066; }
+  .speak-btn.speaking { animation: speakPulse 0.5s ease-in-out infinite; border-color: #FF922B; }
+  @keyframes speakPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,146,43,0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(255,146,43,0); }
+  }
+  .char-hint {
+    font-size: 14px; color: var(--sub);
+    background: #F8F9FA; padding: 6px 16px; border-radius: 20px;
+  }
+
+  /* ---- Buttons ---- */
+  .action-row {
+    display: flex; gap: 24px; margin-top: 12px;
+    padding: 0 4px; width: 100%;
+  }
+  .btn {
+    flex: 1; padding: 18px 12px;
+    border-radius: 18px; border: none;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap; letter-spacing: 2px;
+    min-width: 0;
+  }
+  .btn-know { background: #51CF66; color: #fff; box-shadow: 0 2px 8px rgba(81,207,102,0.25); }
+  .btn-know:hover { background: #40C057; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(81,207,102,0.35); }
+  .btn-know:active { transform: scale(0.96); }
+  .btn-dunno {
+    background: #FFF; color: #FF6B6B;
+    border: 2px solid #FFC9C9;
+    box-shadow: 0 2px 8px rgba(255,107,107,0.1);
+  }
+  .btn-dunno:hover { background: #FFF5F5; transform: translateY(-2px); }
+  .btn-dunno:active { transform: scale(0.96); }
+
+  /* ---- Reward overlay ---- */
+  .reward-overlay {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 100;
+  }
+  .reward-toast {
+    font-size: 48px;
+    animation: floatUp 1.2s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(0.5); }
+    30% { opacity: 1; transform: translateY(-30px) scale(1.3); }
+    100% { opacity: 0; transform: translateY(-120px) scale(1); }
+  }
+
+  /* ---- Results ---- */
+  .results { display: none; flex-direction: column; gap: 20px; }
+  .results.active { display: flex; }
+  .score-ring {
+    width: 140px; height: 140px; border-radius: 50%;
+    background: conic-gradient(#51CF66 var(--pct), #F1F3F5 var(--pct));
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto; position: relative;
+  }
+  .score-inner {
+    width: 110px; height: 110px; border-radius: 50%;
+    background: #fff; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .score-num { font-size: 36px; font-weight: 700; color: #51CF66; }
+  .score-label { font-size: 12px; color: var(--sub); }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .tag {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+  }
+  .tag-known { background: #EBFBEE; color: #2B8A3E; }
+  .tag-unknown { background: #FFF5F5; color: #E03131; }
+
+  .word-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .word-chip {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 600;
+  }
+  .word-known { background: #EBFBEE; color: #2B8A3E; border: 1.5px solid #B2F2BB; }
+  .word-unknown { background: #FFF5F5; color: #E03131; border: 1.5px solid #FFC9C9; }
+
+  .btn-row { display: flex; gap: 12px; }
+  .btn-outline {
+    flex: 1; padding: 14px 0; border-radius: 14px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    background: #fff; border: 2px solid var(--border);
+    transition: all 0.2s;
+  }
+  .btn-outline:hover { border-color: #FFC9C9; }
+  .btn-solid {
+    flex: 1; padding: 14px 0; border-radius: 14px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    background: linear-gradient(135deg, #FF6B6B, #FF922B);
+    color: #fff; border: none;
+    transition: all 0.2s;
+  }
+  .btn-solid:hover { opacity: 0.92; transform: translateY(-1px); }
+
+  /* ---- Levels ---- */
+  .level-select { display: flex; flex-direction: column; gap: 20px; }
+  .level-select h2 { text-align: center; font-size: 20px; color: var(--text); }
+  .level-grid { display: flex; flex-direction: column; gap: 12px; }
+  .level-card {
+    padding: 20px; border-radius: 18px; border: 2px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .level-card:hover { border-color: #FFD43B; background: #FFFEF9; }
+  .level-name { font-size: 17px; font-weight: 600; }
+  .level-desc { font-size: 13px; color: var(--sub); margin-top: 2px; }
+  .level-badge {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    background: #FFF9DB; color: #F08C00;
+  }
+  .level-badge.done { background: #EBFBEE; color: #2B8A3E; }
+
+  /* ---- Star rain ---- */
+  .stars-container { position: fixed; inset: 0; pointer-events: none; z-index: 200; }
+  .star {
+    position: absolute; font-size: 28px;
+    animation: starFall 1.5s ease-in forwards;
+    pointer-events: none;
+  }
+  @keyframes starFall {
+    0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translateY(300px) rotate(360deg) scale(0.3); }
+  }
+
+  /* ---- History ---- */
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+  .history-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; background: #F8F9FA; border-radius: 14px;
+  }
+  .history-date { font-size: 13px; color: var(--sub); }
+  .history-score { font-size: 16px; font-weight: 700; }
+
+  /* ---- Profile screens ---- */
+  .profiles-wrap { display: flex; flex-direction: column; gap: 24px; }
+  .profiles-wrap h2 { text-align: center; font-size: 20px; }
+
+  .profile-cards { display: flex; flex-direction: column; gap: 12px; }
+  .profile-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px; border-radius: 18px;
+    border: 2px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .profile-card:hover { border-color: #FFD43B; background: #FFFEF9; transform: translateY(-2px); }
+  .profile-card-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #FFF0E6;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    flex-shrink: 0;
+  }
+  .profile-card-info { flex: 1; }
+  .profile-card-name { font-size: 17px; font-weight: 600; }
+  .profile-card-meta { font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .profile-card-arrow { font-size: 18px; color: var(--sub); }
+
+  .add-profile-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 16px; border-radius: 18px;
+    border: 2px dashed #DEE2E6;
+    cursor: pointer; font-size: 15px; font-weight: 600; color: var(--sub);
+    transition: all 0.2s;
+  }
+  .add-profile-btn:hover { border-color: #FFC9C9; color: #FF6B6B; background: #FFF5F5; }
+
+  /* ---- New profile form ---- */
+  .new-profile-wrap { display: flex; flex-direction: column; gap: 24px; }
+
+  .avatar-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+    justify-items: center;
+  }
+  .avatar-option {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #F8F9FA; border: 3px solid transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .avatar-option:hover { background: #FFF0E6; transform: scale(1.08); }
+  .avatar-option.selected { border-color: #FF6B6B; background: #FFF5F5; transform: scale(1.12); }
+
+  .name-input {
+    width: 100%; padding: 14px 18px;
+    border-radius: 14px; border: 2px solid var(--border);
+    font-size: 17px; font-family: inherit;
+    text-align: center; outline: none;
+    transition: border-color 0.2s;
+  }
+  .name-input:focus { border-color: #FF6B6B; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div class="stars-container" id="starsContainer"></div>
+<div class="reward-overlay" id="rewardOverlay"></div>
+
+<script>
+// ---- Character bank ----
+const LEVELS = {
+  beginner: {
+    name: '基础篇',
+    desc: '最常见的独体字，30字',
+    chars: '一二三四五六七八九十大小多少上下左右日月水火山石田土人个头口手耳目心子女儿妈爸天云风雨花鸟鱼虫马牛羊狗猫鸡鸭车船飞机太阳月亮星星快乐哭笑红黄蓝绿白黑好吃喝走跑来去坐看听说读写'
+  },
+  intermediate: {
+    name: '进阶篇',
+    desc: '日常高频合体字，40字',
+    chars: '春草树木林河海江河湖海洋地天空光明暗晴阴雪雷唱歌跳舞画纸张笔书本学校老师同学朋友家国城街路电灯开关门户桌椅床柜衣服鞋帽米饭菜肉蛋汤甜咸爸妈爷奶兄弟姐妹我你他她们学习认识问答'
+  },
+  advanced: {
+    name: '挑战篇',
+    desc: '一年级常用字，50字',
+    chars: '语数英音体美劳品德健康自然科学生长叶根茎花瓣果种夏秋冬凉暖热冷温新旧长短粗细快慢远近高低胖瘦方圆正反左右前后里外东西南北中古今后今昨明早晚午夜晚晨昏'
+  }
+};
+
+const AVATARS = ['👧','👦','👩','👨','🐶','🐱','🐼','🐨','🦊','🐰','🐸','🦁','🐯','🐻','🐮','🐷','🐵','🐥','🦄','🐲'];
+
+function parseChars(s) { return [...new Set(s.replace(/\s+/g, '').split(''))]; }
+
+// ---- State ----
+let state = {
+  screen: 'profiles', // profiles | newProfile | profileDetail | home | quiz | results | history
+  profiles: JSON.parse(localStorage.getItem('charQuizProfiles') || '[]'),
+  currentProfileId: localStorage.getItem('charQuizCurrentProfile') || null,
+  currentLevel: null,
+  chars: [],
+  index: 0,
+  known: [],
+  unknown: [],
+  streak: 0,
+  bestStreak: 0,
+  sessions: JSON.parse(localStorage.getItem('charQuizSessions') || '[]'),
+  // Temp state for new profile form
+  newProfileAvatar: '',
+  newProfileName: ''
+};
+
+// Determine startup screen
+if (state.profiles.length === 0) {
+  state.screen = 'newProfile';
+} else if (state.currentProfileId && state.profiles.find(p => p.id === state.currentProfileId)) {
+  state.screen = 'home';
+} else {
+  state.screen = 'profiles';
+}
+
+function currentProfile() {
+  return state.profiles.find(p => p.id === state.currentProfileId) || null;
+}
+
+function profileSessions() {
+  const pid = state.currentProfileId;
+  return state.sessions.filter(s => s.profileId === pid);
+}
+
+// ---- Render ----
+const app = document.getElementById('app');
+const starsContainer = document.getElementById('starsContainer');
+const rewardOverlay = document.getElementById('rewardOverlay');
+
+function render() {
+  switch (state.screen) {
+    case 'profiles': renderProfiles(); break;
+    case 'newProfile': renderNewProfile(); break;
+    case 'profileDetail': renderProfileDetail(); break;
+    case 'home': renderHome(); break;
+    case 'quiz': renderQuiz(); break;
+    case 'results': renderResults(); break;
+    case 'history': renderHistory(); break;
+  }
+}
+
+// ---- Profile selection ----
+function renderProfiles() {
+  const sb = [];
+  sb.push('<div class="profiles-wrap">');
+  sb.push('<h2>谁在识字？</h2>');
+  sb.push('<div class="profile-cards">');
+  for (const p of state.profiles) {
+    const count = state.sessions.filter(s => s.profileId === p.id).length;
+    sb.push(`<div class="profile-card" onclick="selectProfile('${p.id}')">`);
+    sb.push(`<div class="profile-card-avatar">${p.avatar}</div>`);
+    sb.push(`<div class="profile-card-info"><div class="profile-card-name">${esc(p.name)}</div><div class="profile-card-meta">${count} 次测评记录</div></div>`);
+    sb.push(`<div class="profile-card-arrow">›</div>`);
+    sb.push('</div>');
+  }
+  sb.push('</div>');
+  sb.push(`<div class="add-profile-btn" onclick="showNewProfile()">+ 添加小朋友</div>`);
+  sb.push('</div>');
+  app.innerHTML = sb.join('');
+}
+
+function selectProfile(id) {
+  state.currentProfileId = id;
+  localStorage.setItem('charQuizCurrentProfile', id);
+  state.screen = 'home';
+  render();
+}
+
+function showNewProfile() {
+  state.newProfileAvatar = AVATARS[0];
+  state.newProfileName = '';
+  state.screen = 'newProfile';
+  render();
+}
+
+// ---- New profile form ----
+function renderNewProfile() {
+  const sb = [];
+  sb.push('<div class="new-profile-wrap">');
+  sb.push('<div class="header"><h1>添加小朋友</h1><button class="icon-btn" onclick="goBack()">✕</button></div>');
+
+  // Avatar picker
+  sb.push('<div style="text-align:center;font-size:14px;color:var(--sub);margin-bottom:4px">选个头像</div>');
+  sb.push('<div class="avatar-grid">');
+  for (const a of AVATARS) {
+    const sel = a === state.newProfileAvatar ? ' selected' : '';
+    sb.push(`<div class="avatar-option${sel}" onclick="pickAvatar('${a}')">${a}</div>`);
+  }
+  sb.push('</div>');
+
+  // Name input
+  sb.push(`<input class="name-input" id="nameInput" type="text" maxlength="10" placeholder="输入小朋友的名字" value="${esc(state.newProfileName)}" oninput="state.newProfileName=this.value">`);
+
+  // Save button — always enabled, validation in saveProfile()
+  sb.push(`<button class="btn-solid" style="padding:16px;border-radius:14px;font-size:17px;width:100%" onclick="saveProfile()">✓ 创建</button>`);
+
+  sb.push('</div>');
+  app.innerHTML = sb.join('');
+
+  setTimeout(() => {
+    const inp = document.getElementById('nameInput');
+    if (inp) inp.focus();
+  }, 100);
+}
+
+function pickAvatar(a) {
+  state.newProfileAvatar = a;
+  render();
+}
+
+function saveProfile() {
+  const name = state.newProfileName.trim();
+  if (!name) return;
+  const profile = {
+    id: 'p' + Date.now(),
+    name: name,
+    avatar: state.newProfileAvatar,
+    createdAt: new Date().toISOString()
+  };
+  state.profiles.push(profile);
+  localStorage.setItem('charQuizProfiles', JSON.stringify(state.profiles));
+  state.currentProfileId = profile.id;
+  localStorage.setItem('charQuizCurrentProfile', profile.id);
+  state.screen = 'home';
+  render();
+}
+
+function goBack() {
+  if (state.profiles.length === 0) {
+    // Can't go back if no profiles exist
+    return;
+  }
+  state.screen = 'profiles';
+  render();
+}
+
+// ---- Home ----
+function renderHome() {
+  const profile = currentProfile();
+  const sb = [];
+  sb.push('<div class="header">');
+  sb.push(`<div class="profile-badge" onclick="showProfileDetail()"><div class="profile-avatar-sm">${profile ? profile.avatar : '👤'}</div><div class="profile-name-sm">${profile ? esc(profile.name) : '未选择'}</div></div>`);
+  sb.push('<div class="header-actions"><button class="icon-btn" onclick="showHistory()">📋</button></div>');
+  sb.push('</div>');
+  sb.push('<div class="level-select">');
+  sb.push('<h2>选一个等级开始吧</h2>');
+  sb.push('<div class="level-grid">');
+  for (const [key, lv] of Object.entries(LEVELS)) {
+    const chars = parseChars(lv.chars);
+    const doneClass = getLevelDone(key) ? ' done' : '';
+    const badge = getLevelDone(key) ? getLevelBest(key) : '未测';
+    sb.push(`<div class="level-card" onclick="startQuiz('${key}')">`);
+    sb.push(`<div><div class="level-name">${lv.name}</div><div class="level-desc">${lv.desc}（${chars.length}字）</div></div>`);
+    sb.push(`<div class="level-badge${doneClass}">${badge}</div>`);
+    sb.push('</div>');
+  }
+  sb.push('</div>');
+  sb.push('</div>');
+  app.innerHTML = sb.join('');
+}
+
+function switchProfile() {
+  state.screen = 'profiles';
+  render();
+}
+
+function showProfileDetail() {
+  state.screen = 'profileDetail';
+  render();
+}
+
+function renderProfileDetail() {
+  const profile = currentProfile();
+  if (!profile) { goHome(); return; }
+  const sessions = profileSessions();
+  const totalTests = sessions.length;
+  const avgPct = totalTests > 0 ? Math.round(sessions.reduce((sum, s) => sum + s.pct, 0) / totalTests) : 0;
+  const bestPct = totalTests > 0 ? Math.max(...sessions.map(s => s.pct)) : 0;
+  const totalKnown = totalTests > 0 ? sessions.reduce((sum, s) => sum + s.known, 0) : 0;
+  const totalChars = totalTests > 0 ? sessions.reduce((sum, s) => sum + s.total, 0) : 0;
+  const firstDate = totalTests > 0 ? sessions[sessions.length - 1].date : '暂无';
+  const lastDate = totalTests > 0 ? sessions[0].date : '暂无';
+
+  app.innerHTML = `
+    <div>
+      <div class="header">
+        <h1>个人资料</h1>
+        <button class="icon-btn" onclick="goHome()">✕</button>
+      </div>
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="width:80px;height:80px;border-radius:50%;background:#FFF0E6;display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto 12px">${profile.avatar}</div>
+        <div style="font-size:22px;font-weight:700">${esc(profile.name)}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div style="background:#F8F9FA;border-radius:16px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#FF6B6B">${totalTests}</div>
+          <div style="font-size:13px;color:var(--sub)">测评次数</div>
+        </div>
+        <div style="background:#F8F9FA;border-radius:16px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#51CF66">${bestPct}%</div>
+          <div style="font-size:13px;color:var(--sub)">最佳成绩</div>
+        </div>
+        <div style="background:#F8F9FA;border-radius:16px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#FF922B">${avgPct}%</div>
+          <div style="font-size:13px;color:var(--sub)">平均正确率</div>
+        </div>
+        <div style="background:#F8F9FA;border-radius:16px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#845EF7">${totalKnown}/${totalChars}</div>
+          <div style="font-size:13px;color:var(--sub)">累计认字</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--sub);text-align:center;margin-bottom:20px">
+        <div>首次测评：${firstDate}</div>
+        <div>最近测评：${lastDate}</div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn-outline" onclick="switchProfile()">切换小朋友</button>
+        <button class="btn-outline" onclick="showHistory()">测评记录</button>
+      </div>
+    </div>
+  `;
+}
+
+// ---- Quiz ----
+function renderQuiz() {
+  if (state.index >= state.chars.length) {
+    finishQuiz();
+    return;
+  }
+  const ch = state.chars[state.index];
+  const total = state.chars.length;
+  const done = state.index;
+  const pct = Math.round((done / total) * 100);
+  const lv = LEVELS[state.currentLevel];
+  const profile = currentProfile();
+
+  app.innerHTML = `
+    <div class="header">
+      <div class="profile-badge"><div class="profile-avatar-sm">${profile ? profile.avatar : '👤'}</div><div class="profile-name-sm">${profile ? esc(profile.name) : ''}</div></div>
+      <div style="text-align:right"><div style="font-size:18px;font-weight:700">${lv.name}</div><div style="font-size:12px;color:var(--sub)">${state.streak > 0 ? '🔥 连对 ' + state.streak : ''}</div></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-info"><span>第 ${done+1} / ${total} 字</span><span>✅ ${state.known.length}  ⏭ ${state.unknown.length}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="char-stage">
+      <div class="char-card pulse" id="charCard">${ch}</div>
+      <button class="speak-btn" onclick="speakChar('${ch}')" title="点我朗读">🔊</button>
+      <div class="char-hint">认识这个字吗？</div>
+      <div class="action-row">
+        <button class="btn btn-dunno" onclick="answer(false)">不认识</button>
+        <button class="btn btn-know" onclick="answer(true)">认识 ✓</button>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const card = document.getElementById('charCard');
+    if (card) { card.classList.remove('pulse'); void card.offsetWidth; card.classList.add('pulse'); }
+  }, 50);
+}
+
+function answer(knows) {
+  const ch = state.chars[state.index];
+  if (knows) {
+    state.known.push(ch);
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    spawnEmoji('⭐');
+    if (state.streak > 0 && state.streak % 5 === 0) {
+      spawnStars();
+    }
+  } else {
+    state.unknown.push(ch);
+    state.streak = 0;
+  }
+  state.index++;
+  render();
+}
+
+function finishQuiz() {
+  state.screen = 'results';
+  saveSession();
+  spawnStars();
+  render();
+}
+
+// ---- Results ----
+function renderResults() {
+  const total = state.chars.length;
+  const knownCount = state.known.length;
+  const pct = Math.round((knownCount / total) * 100);
+  const pctDeg = (pct / 100) * 360;
+  const profile = currentProfile();
+
+  let emoji, msg;
+  if (pct >= 90) { emoji = '🎉'; msg = '太棒了，' + (profile ? esc(profile.name) : '你') + '是识字小达人！'; }
+  else if (pct >= 70) { emoji = '🌟'; msg = '很不错，继续加油！'; }
+  else if (pct >= 50) { emoji = '💪'; msg = '已经认识一半啦，再来一次！'; }
+  else { emoji = '📖'; msg = '慢慢来，每次多认几个字！'; }
+
+  app.innerHTML = `
+    <div class="results active">
+      <div style="text-align:center;font-size:48px;margin-bottom:8px">${emoji}</div>
+      <div style="text-align:center;font-size:18px;font-weight:600;margin-bottom:8px">${msg}</div>
+      <div class="score-ring" style="--pct:${pctDeg}deg">
+        <div class="score-inner">
+          <div class="score-num">${pct}%</div>
+          <div class="score-label">正确率</div>
+        </div>
+      </div>
+      <div class="tag-row">
+        <span class="tag tag-known">✅ 认识 ${knownCount} 个</span>
+        <span class="tag tag-unknown">⏭ 还不会 ${state.unknown.length} 个</span>
+        ${state.bestStreak >= 5 ? `<span class="tag" style="background:#FFF9DB;color:#F08C00">🔥 最长连对 ${state.bestStreak}</span>` : ''}
+      </div>
+      ${state.known.length > 0 ? `
+      <div><div style="font-size:14px;color:var(--sub);margin-bottom:8px">认识的字：</div><div class="word-list">${state.known.map(c => `<div class="word-chip word-known">${c}</div>`).join('')}</div></div>` : ''}
+      ${state.unknown.length > 0 ? `
+      <div><div style="font-size:14px;color:var(--sub);margin-bottom:8px">还不会的字：</div><div class="word-list">${state.unknown.map(c => `<div class="word-chip word-unknown">${c}</div>`).join('')}</div></div>` : ''}
+      <div class="btn-row">
+        <button class="btn-outline" onclick="exportData()">导出记录</button>
+        <button class="btn-outline" onclick="retryUnknown()">复习生字 (${state.unknown.length})</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn-solid" onclick="resetQuiz()">重新测试</button>
+        <button class="btn-outline" onclick="goHome()">返回首页</button>
+      </div>
+    </div>
+  `;
+}
+
+// ---- History ----
+function renderHistory() {
+  const sessions = profileSessions().slice().reverse();
+  const profile = currentProfile();
+  app.innerHTML = `
+    <div>
+      <div class="header">
+        <h1>历史记录</h1>
+        <button class="icon-btn" onclick="goHome()">✕</button>
+      </div>
+      ${profile ? `<div style="text-align:center;margin-bottom:16px;font-size:15px;color:var(--sub)">${profile.avatar} ${esc(profile.name)} 的测评记录</div>` : ''}
+      ${sessions.length === 0 ? '<div style="text-align:center;color:var(--sub);padding:40px 0">还没有测试记录</div>' : `
+      <div class="history-list">
+        ${sessions.map((s,i) => `
+          <div class="history-item">
+            <div><div style="font-weight:600">${LEVELS[s.level]?.name || s.level}（${s.total}字）</div><div class="history-date">${s.date}</div></div>
+            <div class="history-score" style="color:${s.pct >= 70 ? '#51CF66' : s.pct >= 50 ? '#F08C00' : '#E03131'}">${s.pct}% (${s.known}/${s.total})</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:16px"><button class="btn-outline" onclick="exportData()" style="width:100%">导出全部记录</button></div>
+      `}
+    </div>
+  `;
+}
+
+// ---- Effects ----
+function spawnEmoji(e) {
+  const el = document.createElement('div');
+  el.className = 'reward-toast';
+  el.textContent = e;
+  rewardOverlay.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+function spawnStars() {
+  const emojis = ['⭐','🌟','✨','🎉','💫','🎊'];
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      star.style.left = Math.random() * 90 + '%';
+      star.style.top = Math.random() * 20 + '%';
+      star.style.animationDuration = (1 + Math.random() * 1.5) + 's';
+      starsContainer.appendChild(star);
+      setTimeout(() => star.remove(), 2000);
+    }, i * 80);
+  }
+}
+
+// ---- Data ----
+function saveSession() {
+  const session = {
+    profileId: state.currentProfileId,
+    level: state.currentLevel,
+    date: new Date().toLocaleString('zh-CN'),
+    total: state.chars.length,
+    known: state.known.length,
+    unknown: state.unknown.length,
+    pct: Math.round((state.known.length / state.chars.length) * 100),
+    bestStreak: state.bestStreak,
+    knownChars: state.known.join(''),
+    unknownChars: state.unknown.join('')
+  };
+  state.sessions.push(session);
+  localStorage.setItem('charQuizSessions', JSON.stringify(state.sessions));
+}
+
+function getLevelDone(key) {
+  return profileSessions().some(s => s.level === key);
+}
+
+function getLevelBest(key) {
+  const sessions = profileSessions().filter(s => s.level === key);
+  if (sessions.length === 0) return '未测';
+  const best = Math.max(...sessions.map(s => s.pct));
+  return `最佳 ${best}%`;
+}
+
+function exportData() {
+  const profile = currentProfile();
+  const csv = ['小朋友,日期,等级,总字数,认识,不认识,正确率,最长连对'];
+  const sessions = profileSessions();
+  sessions.forEach(s => {
+    csv.push([profile ? profile.name : '', s.date, LEVELS[s.level]?.name || s.level, s.total, s.known, s.unknown, s.pct + '%', s.bestStreak].join(','));
+  });
+  const blob = new Blob(['﻿' + csv.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `识字测评记录_${profile ? profile.name : '未命名'}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function showHistory() {
+  state.screen = 'history';
+  render();
+}
+
+function goHome() {
+  state.screen = 'home';
+  render();
+}
+
+function startQuiz(levelKey) {
+  state.currentLevel = levelKey;
+  state.chars = shuffle(parseChars(LEVELS[levelKey].chars));
+  state.index = 0;
+  state.known = [];
+  state.unknown = [];
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.screen = 'quiz';
+  render();
+}
+
+function retryUnknown() {
+  if (state.unknown.length === 0) return;
+  state.chars = shuffle([...state.unknown]);
+  state.index = 0;
+  state.known = [];
+  state.unknown = [];
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.screen = 'quiz';
+  render();
+}
+
+function resetQuiz() { startQuiz(state.currentLevel); }
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function speakChar(ch) {
+  if (!window.speechSynthesis) return;
+  // Cancel any ongoing speech
+  speechSynthesis.cancel();
+  const btn = document.querySelector('.speak-btn');
+  if (btn) btn.classList.add('speaking');
+  const u = new SpeechSynthesisUtterance(ch);
+  u.lang = 'zh-CN';
+  u.rate = 0.8;
+  u.onend = u.onerror = () => { if (btn) btn.classList.remove('speaking'); };
+  speechSynthesis.speak(u);
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ---- Init ----
+render();
+</script>
+</body>
+</html>
